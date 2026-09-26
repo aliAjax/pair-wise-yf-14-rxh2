@@ -1,126 +1,166 @@
+import { CueList } from "./components/CueList";
+import { FixtureEditor } from "./components/FixtureEditor";
+import { ScenePreview } from "./components/ScenePreview";
+import { StagePlot } from "./components/StagePlot";
+import { cueLabel } from "./domain/rules";
+import { LIGHT_POSITIONS } from "./domain/types";
+import { useRehearsal } from "./state/useRehearsal";
 import "./styles.css";
 
-const project = {
-  "sourceNo": 2,
-  "id": "hxyfront-62002",
-  "port": 62002,
-  "title": "剧场灯光Cue表管理",
-  "domain": "剧场灯光",
-  "prompt": "做一个给剧场灯光师使用的灯位与Cue表管理前端项目，可以维护演出名称、灯具编号、通道号、色片、焦点位置、亮度预设和Cue触发顺序。页面需要有舞台平面灯位图、Cue列表、当前场景预览、灯具筛选和演出版本备注，适合排练期间快速调整。",
-  "palette": [
-    "#7c3aed",
-    "#f59e0b",
-    "#06b6d4"
-  ],
-  "metrics": [
-    "灯具数量",
-    "Cue数量",
-    "当前场景",
-    "待确认焦点"
-  ],
-  "filters": [
-    "面光",
-    "侧光",
-    "逆光",
-    "效果光"
-  ],
-  "fields": [
-    "演出名称",
-    "灯具编号",
-    "通道号",
-    "色片",
-    "焦点位置",
-    "亮度预设"
-  ],
-  "records": [
-    [
-      "Cue 12",
-      "冷蓝侧光",
-      "CH 021-028，亮度65%",
-      "二幕开场"
-    ],
-    [
-      "Cue 18",
-      "追光入场",
-      "FOH-03，焦点门口",
-      "需演员走位确认"
-    ],
-    [
-      "Cue 24",
-      "暖色谢幕",
-      "全台面光80%",
-      "版本B"
-    ]
-  ]
-};
-
 function App() {
+  const rehearsal = useRehearsal();
+  const { draft, metrics, blockedRemoval } = rehearsal;
+
+  const visibleIds = new Set(rehearsal.visibleFixtures.map((fixture) => fixture.id));
+
   return (
     <main className="app">
       <section className="hero">
-        <p>{project.id} · 源提示词{project.sourceNo} · Port {project.port}</p>
-        <h1>{project.title}</h1>
-        <span>{project.prompt}</span>
+        <p>hxyfront-62002 · 排演模式</p>
+        <h1>{draft.showName}</h1>
+        <div className="hero-meta">
+          <label>
+            <span>演出名称</span>
+            <input
+              value={draft.showName}
+              onChange={(event) => rehearsal.updateShowMeta({ showName: event.target.value })}
+            />
+          </label>
+          <label>
+            <span>演出版本备注</span>
+            <input
+              value={draft.versionNote}
+              onChange={(event) => rehearsal.updateShowMeta({ versionNote: event.target.value })}
+            />
+          </label>
+        </div>
+        <div className="draft-bar">
+          <span>{rehearsal.savedAt ? `草稿已保存到本地 · ${rehearsal.savedAt}` : "调整将自动存为本地草稿"}</span>
+          <button onClick={rehearsal.resetDraft}>放弃草稿，恢复初始数据</button>
+        </div>
       </section>
 
       <section className="metrics">
-        {project.metrics.map((metric: string, index: number) => (
-          <article key={metric}>
-            <small>{metric}</small>
-            <strong>{[86, 14, 7, 32][index] ?? 12}</strong>
-          </article>
-        ))}
+        <article>
+          <small>灯具数量</small>
+          <strong>{metrics.fixtureCount}</strong>
+        </article>
+        <article>
+          <small>Cue数量</small>
+          <strong>{metrics.cueCount}</strong>
+        </article>
+        <article>
+          <small>当前场景</small>
+          <strong>
+            {rehearsal.currentCue ? cueLabel(rehearsal.currentCueIndex).replace("Cue ", "") : "—"}
+          </strong>
+        </article>
+        <article>
+          <small>待确认焦点</small>
+          <strong>{metrics.pendingFocus}</strong>
+        </article>
       </section>
 
       <section className="workspace">
         <aside className="panel">
-          <h2>{project.domain}筛选</h2>
+          <h2>光位筛选</h2>
           <div className="chips">
-            {project.filters.map((item: string) => (
-              <button key={item}>{item}</button>
+            {["全部", ...LIGHT_POSITIONS].map((position) => (
+              <button
+                key={position}
+                className={rehearsal.positionFilter === position ? "is-active" : ""}
+                onClick={() => rehearsal.setPositionFilter(position as typeof rehearsal.positionFilter)}
+              >
+                {position}
+              </button>
             ))}
+          </div>
+          <h2 className="fixture-list-title">灯具（{rehearsal.visibleFixtures.length}）</h2>
+          <div className="fixture-list">
+            {rehearsal.visibleFixtures.map((fixture) => (
+              <button
+                key={fixture.id}
+                className={`fixture-item${
+                  rehearsal.selectedFixture?.id === fixture.id ? " is-active" : ""
+                }`}
+                onClick={() => rehearsal.selectFixture(fixture.id)}
+              >
+                <b>{fixture.id}</b>
+                <span>
+                  {fixture.channel} · {fixture.intensity}%
+                </span>
+              </button>
+            ))}
+            {rehearsal.visibleFixtures.length === 0 && (
+              <p className="empty-hint">该光位下暂无灯具。</p>
+            )}
           </div>
         </aside>
 
-        <section className="panel form-panel">
+        <section className="panel">
           <div className="heading">
             <div>
-              <p>专业字段</p>
-              <h2>新增记录</h2>
+              <p>灯位图</p>
+              <h2>舞台平面图</h2>
             </div>
-            <button className="primary">保存草稿</button>
           </div>
-          <div className="field-grid">
-            {project.fields.map((field: string) => (
-              <label key={field}>
-                <span>{field}</span>
-                <input placeholder={"填写" + field} />
-              </label>
-            ))}
-          </div>
+          <StagePlot
+            fixtures={draft.fixtures}
+            visibleIds={visibleIds}
+            currentCue={rehearsal.currentCue}
+            selectedId={rehearsal.selectedFixture?.id ?? null}
+            filter={rehearsal.positionFilter}
+            onSelect={rehearsal.selectFixture}
+          />
         </section>
+
+        <FixtureEditor
+          fixture={rehearsal.selectedFixture}
+          references={
+            rehearsal.selectedFixture ? rehearsal.referencesOf(rehearsal.selectedFixture.id) : []
+          }
+          onPatch={rehearsal.patchFixture}
+          onRemove={rehearsal.requestRemoveFixture}
+        />
       </section>
 
-      <section className="panel">
-        <div className="heading">
-          <div>
-            <p>历史记录</p>
-            <h2>近期工作台</h2>
-          </div>
-          <button>导出摘要</button>
-        </div>
-        <div className="records">
-          {project.records.map((record: string[], index: number) => (
-            <article key={record.join("-")}>
-              <b>{String(index + 1).padStart(2, "0")}</b>
-              <div>
-                <h3>{record[0]}</h3>
-                <p>{record.slice(1).join(" · ")}</p>
-              </div>
-            </article>
-          ))}
-        </div>
+      <section className="bottom-grid">
+        <CueList
+          cues={draft.cues}
+          currentCueId={draft.currentCueId}
+          onAdd={rehearsal.addCue}
+          onRename={rehearsal.renameCue}
+          onMove={rehearsal.moveCue}
+          onSetCurrent={rehearsal.setCurrentCue}
+        />
+        <ScenePreview
+          cue={rehearsal.currentCue}
+          cueIndex={rehearsal.currentCueIndex}
+          fixtures={rehearsal.currentCueFixtures}
+          onSelect={rehearsal.selectFixture}
+        />
       </section>
+
+      {blockedRemoval && (
+        <div className="modal-backdrop" role="alertdialog" aria-modal="true">
+          <div className="modal">
+            <h2>无法移除 {blockedRemoval.fixture.id}</h2>
+            <p>以下 Cue 仍引用该灯具，移除已被阻止，灯具与 Cue 顺序保持原样：</p>
+            <ul>
+              {blockedRemoval.references.map(({ cue, index }) => (
+                <li key={cue.id}>
+                  <b>{cueLabel(index)}</b> {cue.name}
+                  {cue.note ? `（${cue.note}）` : ""}
+                </li>
+              ))}
+            </ul>
+            <p className="modal-tip">请先在相关 Cue 中调整灯具引用，再移除该灯具。</p>
+            <button className="primary" onClick={rehearsal.dismissBlockedRemoval}>
+              知道了
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

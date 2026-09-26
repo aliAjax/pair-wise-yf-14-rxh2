@@ -18,7 +18,8 @@ body {
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 
@@ -29,6 +30,11 @@ button {
   background: #ffffff;
   color: #172033;
   cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .app {
@@ -47,17 +53,15 @@ button {
 }
 
 .hero {
-  min-height: 250px;
   display: grid;
   align-content: center;
-  gap: 14px;
-  padding: 34px;
+  gap: 16px;
+  padding: 30px 34px;
   border-left: 7px solid var(--primary);
 }
 
 .hero p,
-.hero h1,
-.hero span {
+.hero h1 {
   margin: 0;
 }
 
@@ -68,15 +72,35 @@ button {
 }
 
 .hero h1 {
-  font-size: clamp(34px, 6vw, 62px);
-  line-height: 1;
-  letter-spacing: 0;
+  font-size: clamp(28px, 5vw, 46px);
+  line-height: 1.1;
 }
 
-.hero span {
+.hero-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
   max-width: 860px;
+}
+
+.draft-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  border: 1px dashed color-mix(in srgb, var(--accent) 55%, var(--border));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 7%, #ffffff);
   color: #526071;
-  line-height: 1.75;
+  font-size: 14px;
+}
+
+.draft-bar button {
+  min-height: 32px;
+  padding: 0 12px;
+  font-size: 13px;
 }
 
 .metrics {
@@ -103,9 +127,10 @@ button {
 
 .workspace {
   display: grid;
-  grid-template-columns: 300px 1fr;
+  grid-template-columns: 260px 1fr 320px;
   gap: 18px;
   margin-bottom: 18px;
+  align-items: start;
 }
 
 .panel {
@@ -130,6 +155,44 @@ button {
   background: color-mix(in srgb, var(--primary) 8%, #ffffff);
 }
 
+.chips button.is-active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #ffffff;
+}
+
+.fixture-list-title {
+  margin: 20px 0 10px;
+  font-size: 15px;
+}
+
+.fixture-list {
+  display: grid;
+  gap: 8px;
+  max-height: 380px;
+  overflow: auto;
+}
+
+.fixture-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  min-height: 40px;
+  text-align: left;
+}
+
+.fixture-item span {
+  color: #64748b;
+  font-size: 13px;
+}
+
+.fixture-item.is-active {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 10%, #ffffff);
+}
+
 .heading {
   display: flex;
   align-items: start;
@@ -149,10 +212,21 @@ button {
   padding: 0 14px;
 }
 
+.danger {
+  border-color: #f3c2c2;
+  color: #b91c1c;
+  background: #fef5f5;
+  padding: 0 14px;
+}
+
 .field-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
+}
+
+.editor-panel .field-grid {
+  grid-template-columns: 1fr;
 }
 
 label {
@@ -165,22 +239,118 @@ label span {
   font-size: 13px;
 }
 
-input {
+input,
+select {
   width: 100%;
   min-height: 42px;
   border-radius: 7px;
   border: 1px solid var(--border);
   padding: 0 12px;
+  background: #ffffff;
 }
 
-.records {
+input[type="range"] {
+  padding: 0;
+  min-height: 32px;
+}
+
+.empty-hint {
+  color: #64748b;
+  line-height: 1.6;
+}
+
+.ref-hint {
+  margin: 16px 0 0;
+  padding: 10px 12px;
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--secondary) 12%, #ffffff);
+  color: #92610a;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* 舞台平面图 */
+.stage-plot svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #0f172a;
+}
+
+.plot-foh {
+  fill: #1e293b;
+}
+
+.plot-stage {
+  fill: #111c33;
+  stroke: #334155;
+}
+
+.plot-apron {
+  stroke: #334155;
+  stroke-dasharray: 2 2;
+}
+
+.plot-zone-label {
+  fill: #64748b;
+  font-size: 3.4px;
+  text-anchor: middle;
+}
+
+.plot-fixture {
+  cursor: pointer;
+}
+
+.plot-fixture.is-dimmed {
+  opacity: 0.18;
+}
+
+.plot-halo {
+  opacity: 0.3;
+}
+
+.plot-dot {
+  stroke: #0f172a;
+  stroke-width: 0.4;
+}
+
+.plot-dot.is-selected {
+  stroke: #ffffff;
+  stroke-width: 0.9;
+}
+
+.plot-label {
+  fill: #cbd5e1;
+  font-size: 3px;
+  text-anchor: middle;
+  pointer-events: none;
+}
+
+.plot-legend {
+  margin: 10px 0 0;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* 底部：Cue 列表 + 当前场景 */
+.bottom-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.cue-list {
   display: grid;
   gap: 12px;
 }
 
-.records article {
+.cue-row {
   display: grid;
-  grid-template-columns: 54px 1fr;
+  grid-template-columns: 64px 1fr auto;
   gap: 14px;
   align-items: center;
   padding: 14px;
@@ -189,34 +359,165 @@ input {
   background: #fbfdff;
 }
 
-.records b {
+.cue-row.is-current {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 6%, #ffffff);
+}
+
+.cue-no {
   display: grid;
   place-items: center;
   height: 44px;
   border-radius: 8px;
   color: #ffffff;
   background: linear-gradient(135deg, var(--primary), var(--accent));
+  font-size: 14px;
 }
 
-.records h3 {
-  margin-bottom: 6px;
+.cue-main h3 {
+  margin: 0 0 6px;
 }
 
-.records p {
+.cue-main p {
   margin: 0;
   color: #526071;
+  font-size: 13px;
   line-height: 1.6;
+}
+
+.cue-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.cue-actions button {
+  min-height: 34px;
+  padding: 0 10px;
+  font-size: 13px;
+}
+
+.current-btn.is-on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
+}
+
+/* 当前场景预览 */
+.scene-list {
+  display: grid;
+  gap: 10px;
+}
+
+.scene-row {
+  display: grid;
+  grid-template-columns: 14px 74px 1fr 110px 44px;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  min-height: 46px;
+  text-align: left;
+  background: #fbfdff;
+}
+
+.scene-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid rgba(15, 23, 42, 0.2);
+}
+
+.scene-id {
+  font-weight: 700;
+}
+
+.scene-meta {
+  color: #526071;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scene-bar {
+  height: 8px;
+  border-radius: 4px;
+  background: #e8eef6;
+  overflow: hidden;
+}
+
+.scene-bar i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--secondary), var(--accent));
+}
+
+.scene-intensity {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: #526071;
+  font-size: 13px;
+}
+
+/* 阻挡移除提示 */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.5);
+  z-index: 10;
+}
+
+.modal {
+  width: min(460px, 100%);
+  padding: 26px;
+  border-radius: 10px;
+  background: #ffffff;
+  border-top: 5px solid #b91c1c;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.35);
+}
+
+.modal h2 {
+  margin-top: 0;
+}
+
+.modal ul {
+  margin: 12px 0;
+  padding-left: 20px;
+  line-height: 1.9;
+}
+
+.modal-tip {
+  color: #64748b;
+  font-size: 13px;
+}
+
+@media (max-width: 1020px) {
+  .workspace,
+  .bottom-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 860px) {
   .metrics,
-  .workspace,
+  .hero-meta,
   .field-grid {
     grid-template-columns: 1fr;
   }
 
   .hero {
-    min-height: 210px;
     padding: 24px;
+  }
+
+  .scene-row {
+    grid-template-columns: 14px 64px 1fr 44px;
+  }
+
+  .scene-bar {
+    display: none;
   }
 }
